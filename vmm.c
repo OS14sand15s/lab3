@@ -69,7 +69,7 @@ void do_init()
 				break;
 		}
 		/* 设置该页对应的辅存地址 */
-		pageTable[i].auxAddr = i * PAGE_SIZE * 2;
+		pageTable[i].auxAddr = i * PAGE_SIZE ;
 	}
 	for (j = 0; j < BLOCK_SUM; j++)
 	{
