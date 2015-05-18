@@ -28,53 +28,17 @@ void do_init()
 		pageTable[i].edited = FALSE;
 		pageTable[i].count = 0;
 		/* 使用随机数设置该页的保护类型 */
-		switch (random() % 7)
-		{
-			case 0:
-			{
-				pageTable[i].proType = READABLE;
-				break;
-			}
-			case 1:
-			{
-				pageTable[i].proType = WRITABLE;
-				break;
-			}
-			case 2:
-			{
-				pageTable[i].proType = EXECUTABLE;
-				break;
-			}
-			case 3:
-			{
-				pageTable[i].proType = READABLE | WRITABLE;
-				break;
-			}
-			case 4:
-			{
-				pageTable[i].proType = READABLE | EXECUTABLE;
-				break;
-			}
-			case 5:
-			{
-				pageTable[i].proType = WRITABLE | EXECUTABLE;
-				break;
-			}
-			case 6:
-			{
-				pageTable[i].proType = READABLE | WRITABLE | EXECUTABLE;
-				break;
-			}
-			default:
-				break;
-		}
+
+		pageTable[i].proType = random() % 7+1;
+	
+		
 		/* 设置该页对应的辅存地址 */
 		pageTable[i].auxAddr = i * PAGE_SIZE ;
 	}
 	for (j = 0; j < BLOCK_SUM; j++)
 	{
 		/* 随机选择一些物理块进行页面装入 */
-		if (random() % 2 == 0)
+		if (random() & 1)
 		{
 			do_page_in(&pageTable[j], j);
 			pageTable[j].blockNum = j;
@@ -199,7 +163,7 @@ void do_LFU(Ptr_PageTableItem ptr_pageTabIt)
 	printf("没有空闲物理块，开始进行LFU页面替换...\n");
 	for (i = 0, min = 0xFFFFFFFF, page = 0; i < PAGE_SUM; i++)
 	{
-		if (pageTable[i].count < min)
+		if (pageTable[i].filled&&pageTable[i].count < min)
 		{
 			min = pageTable[i].count;
 			page = i;
