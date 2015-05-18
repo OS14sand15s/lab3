@@ -370,17 +370,24 @@ char *get_proType_str(char *str, BYTE type)
 	str[3] = '\0';
 	return str;
 }
+void initFile(){//-----------------------------------------add1
+	int i;
+	for(i=0;i<256;i++)
+	{
 
+		fprintf(ptr_auxMem, "%c",(int)random() % 26+'a' );
+	}
+}	
 int main(int argc, char* argv[])
 {
 	char c;
 	int i;
-	if (!(ptr_auxMem = fopen(AUXILIARY_MEMORY, "r+")))
+	if (!(ptr_auxMem = fopen(AUXILIARY_MEMORY, "w+")))
 	{
 		do_error(ERROR_FILE_OPEN_FAILED);
 		exit(1);
 	}
-	
+	initFile();
 	do_init();
 	do_print_info();
 	ptr_memAccReq = (Ptr_MemoryAccessRequest) malloc(sizeof(MemoryAccessRequest));
