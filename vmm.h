@@ -30,7 +30,6 @@
 #define EXECUTABLE 0x04u
 
 
-
 /* 定义字节类型 */
 #define BYTE unsigned char
 
@@ -38,11 +37,14 @@ typedef enum {
 	TRUE = 1, FALSE = 0
 } BOOL;
 
-
+typedef enum{//--------
+	PROCESS_1=0,PROCESS_2=1
+}PROCESS_NAME;
 
 /* 页表项 */
 typedef struct
 {
+	PROCESS_NAME process;//属于进程1还是进程2
 	unsigned int pageNum;
 	unsigned int blockNum; //物理块号
 	BOOL filled; //页面装入特征位
@@ -51,6 +53,8 @@ typedef struct
 	unsigned  auxAddr; //外存地址
 	unsigned  count; //页面使用计数器
 } PageTableItem, *Ptr_PageTableItem;
+
+
 
 /* 访存请求类型 */
 typedef enum { 
@@ -67,6 +71,7 @@ typedef struct
 	BYTE value; //写请求的值
 } MemoryAccessRequest, *Ptr_MemoryAccessRequest;
 
+#define DATALEN sizeof(MemoryAccessRequest);
 
 /* 访存错误代码 */
 typedef enum {
