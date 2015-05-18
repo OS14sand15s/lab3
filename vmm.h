@@ -48,8 +48,8 @@ typedef struct
 	BOOL filled; //页面装入特征位
 	BYTE proType; //页面保护类型
 	BOOL edited; //页面修改标识
-	unsigned long auxAddr; //外存地址
-	unsigned long count; //页面使用计数器
+	unsigned  auxAddr; //外存地址
+	unsigned  count; //页面使用计数器
 } PageTableItem, *Ptr_PageTableItem;
 
 /* 访存请求类型 */
@@ -63,7 +63,7 @@ typedef enum {
 typedef struct
 {
 	MemoryAccessRequestType reqType; //访存请求类型
-	unsigned long virAddr; //虚地址
+	unsigned  virAddr; //虚地址
 	BYTE value; //写请求的值
 } MemoryAccessRequest, *Ptr_MemoryAccessRequest;
 
