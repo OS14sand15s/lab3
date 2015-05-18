@@ -4,7 +4,7 @@
 #include "vmm.h"
 
 /* 页表 */
-PageTableItem pageTable[PAGE_SUM];
+PageTableItem pageTable[PAGE_SIZE][PAGE_SIZE][PAGE_SIZE];// Simulateof three level page table with a three-dimensional array;
 /* 实存空间 */
 BYTE actMem[ACTUAL_MEMORY_SIZE];
 /* 用文件模拟辅存空间 */
@@ -14,35 +14,37 @@ BOOL blockStatus[BLOCK_SUM];
 /* 访存请求 */
 Ptr_MemoryAccessRequest ptr_memAccReq;
 
-
-
+PageTableItem find(int i){//解析地址到三级页表中寻址
+	return pageTable[i/16][i%16/4][i%4];
+}
 /* 初始化环境 */
+
 void do_init()
 {
 	int i, j;
 	srandom(time(NULL));
 	for (i = 0; i < PAGE_SUM; i++)
 	{
-		pageTable[i].pageNum = i;
-		pageTable[i].filled = FALSE;
-		pageTable[i].edited = FALSE;
-		pageTable[i].count = 0;
+		pageTable[i/16][i%16/4][i%4].pageNum = i;
+		pageTable[i/16][i%16/4][i%4].filled = FALSE;
+		pageTable[i/16][i%16/4][i%4].edited = FALSE;
+		pageTable[i/16][i%16/4][i%4].count = 0;
 		/* 使用随机数设置该页的保护类型 */
 
-		pageTable[i].proType = random() % 7+1;
+		pageTable[i/16][i%16/4][i%4].proType = random() % 7+1;
 	
 		
 		/* 设置该页对应的辅存地址 */
-		pageTable[i].auxAddr = i * PAGE_SIZE ;
+		pageTable[i/16][i%16/4][i%4].auxAddr = i * PAGE_SIZE ;
 	}
 	for (j = 0; j < BLOCK_SUM; j++)
 	{
 		/* 随机选择一些物理块进行页面装入 */
 		if (random() & 1)
 		{
-			do_page_in(&pageTable[j], j);
-			pageTable[j].blockNum = j;
-			pageTable[j].filled = TRUE;
+			do_page_in(&pageTable[j/16][j%16/4][j%4], j);
+			pageTable[j/16][j%16/4][j%4].blockNum = j;
+			pageTable[j/16][j%16/4][j%4].filled = TRUE;
 			blockStatus[j] = TRUE;
 		}
 		else
@@ -71,7 +73,7 @@ void do_response()
 	printf("页号为：%u\t页内偏移为：%u\n", pageNum, offAddr);
 
 	/* 获取对应页表项 */
-	ptr_pageTabIt = &pageTable[pageNum];
+	ptr_pageTabIt = &pageTable[pageNum/16][pageNum%16/4][pageNum%4];
 	
 	/* 根据特征位决定是否产生缺页中断 */
 	if (!ptr_pageTabIt->filled)
@@ -163,28 +165,28 @@ void do_LFU(Ptr_PageTableItem ptr_pageTabIt)
 	printf("没有空闲物理块，开始进行LFU页面替换...\n");
 	for (i = 0, min = 0xFFFFFFFF, page = 0; i < PAGE_SUM; i++)
 	{
-		if (pageTable[i].filled&&pageTable[i].count < min)
+		if (pageTable[i/16][i%16/4][i%4].filled&&pageTable[i/16][i%16/4][i%4].count < min)
 		{
-			min = pageTable[i].count;
+			min = pageTable[i/16][i%16/4][i%4].count;
 			page = i;
 		}
 	}
 	printf("选择第%u页进行替换\n", page);
-	if (pageTable[page].edited)
+	if (pageTable[page/16][page%16/4][page%4].edited)
 	{
 		/* 页面内容有修改，需要写回至辅存 */
 		printf("该页内容有修改，写回至辅存\n");
-		do_page_out(&pageTable[page]);
+		do_page_out(&pageTable[page/16][page%16/4][page%4]);
 	}
-	pageTable[page].filled = FALSE;
-	pageTable[page].count = 0;
+	pageTable[page/16][page%16/4][page%4].filled = FALSE;
+	pageTable[page/16][page%16/4][page%4].count = 0;
 
 
 	/* 读辅存内容，写入到实存 */
-	do_page_in(ptr_pageTabIt, pageTable[page].blockNum);
+	do_page_in(ptr_pageTabIt, pageTable[page/16][page%16/4][page%4].blockNum);
 	
 	/* 更新页表内容 */
-	ptr_pageTabIt->blockNum = pageTable[page].blockNum;
+	ptr_pageTabIt->blockNum = pageTable[page/16][page%16/4][page%4].blockNum;
 	ptr_pageTabIt->filled = TRUE;
 	ptr_pageTabIt->edited = FALSE;
 	ptr_pageTabIt->count = 0;
@@ -346,9 +348,9 @@ void do_print_info()
 	printf("页号\t块号\t装入\t修改\t保护\t计数\t辅存\n");
 	for (i = 0; i < PAGE_SUM; i++)
 	{
-		printf("%u\t%u\t%u\t%u\t%s\t%u\t%u\n", i, pageTable[i].blockNum, pageTable[i].filled, 
-			pageTable[i].edited, get_proType_str(str, pageTable[i].proType), 
-			pageTable[i].count, pageTable[i].auxAddr);
+		printf("%u\t%u\t%u\t%u\t%s\t%u\t%u\n", i, pageTable[i/16][i%16/4][i%4].blockNum, pageTable[i/16][i%16/4][i%4].filled, 
+			pageTable[i/16][i%16/4][i%4].edited, get_proType_str(str, pageTable[i/16][i%16/4][i%4].proType), 
+			pageTable[i/16][i%16/4][i%4].count, pageTable[i/16][i%16/4][i%4].auxAddr);
 	}
 }
 
