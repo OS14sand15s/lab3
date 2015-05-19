@@ -51,7 +51,7 @@ typedef struct
 	BYTE proType; //页面保护类型
 	BOOL edited; //页面修改标识
 	unsigned  auxAddr; //外存地址
-	unsigned  count; //页面使用计数器
+	unsigned  time_count; //页面使用计数器
 } PageTableItem, *Ptr_PageTableItem;
 
 
@@ -98,7 +98,7 @@ void do_response();
 void do_page_fault(Ptr_PageTableItem);
 
 /* LFU页面替换 */
-void do_LFU(Ptr_PageTableItem);
+void do_LRU(Ptr_PageTableItem);
 
 /* 装入页面 */
 void do_page_in(Ptr_PageTableItem, unsigned in);
@@ -117,3 +117,4 @@ char *get_proType_str(char *, BYTE);
 
 
 #endif
+
