@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "vmm.h"
-
+#include <fcntl.h>
 /* 页表 */
 PageTableItem pageTable[PAGE_SIZE][PAGE_SIZE][PAGE_SIZE];// Simulateof three level page table with a three-dimensional array;
 /* 实存空间 */
@@ -13,6 +13,10 @@ FILE *ptr_auxMem;
 BOOL blockStatus[BLOCK_SUM];
 /* 访存请求 */
 Ptr_MemoryAccessRequest ptr_memAccReq;
+
+//MemoryAccessRequest memAccReq_fifo;
+
+int fifo;
 
 PageTableItem find(int i){//解析地址到三级页表中寻址
 	return pageTable[i/16][i%16/4][i%4];
@@ -383,7 +387,8 @@ void initFile(){//-----------------------------------------add1
 int main(int argc, char* argv[])
 {
 	char c;
-	int i;
+	int i,count;
+	struct stat statbuf;
 	if (!(ptr_auxMem = fopen(AUXILIARY_MEMORY, "w+")))
 	{
 		do_error(ERROR_FILE_OPEN_FAILED);
@@ -394,15 +399,29 @@ int main(int argc, char* argv[])
 	do_print_info();
 	ptr_memAccReq = (Ptr_MemoryAccessRequest) malloc(sizeof(MemoryAccessRequest));
 	/* 在循环中模拟访存请求与处理过程 */
+	if(stat("/tmp/server",&statbuf)==0){
+		/* 如果FIFO文件存在,删掉 */
+		if(remove("/tmp/server")<0)
+			printf("remove fifo failed\n");
+	}
+
+	if(mkfifo("/tmp/server",0666)<0)
+		printf("mkfifo failed!\n");
+		/* 在非阻塞模式下打开FIFO */
+	if((fifo=open("/tmp/server",O_RDONLY))<0)
+		printf("Open fifo failed!\n");
+
 	while (TRUE)
 	{
-		do_request();
+		if((count=read(fifo,ptr_memAccReq,DATALEN))<0)
+			printf("Read fifo failed!\n");
+		printf("addr:%d\n",ptr_memAccReq->virAddr);
 		do_response();
-		printf("按Y打印页表，按其他键不打印...\n");
+	/*	printf("按Y打印页表，按其他键不打印...\n");
 		if ((c = getchar()) == 'y' || c == 'Y')
 			do_print_info();
 		while (c != '\n')
-			c = getchar();
+			c = getchar();*/
 		printf("按X退出程序，按其他键继续...\n");
 		if ((c = getchar()) == 'x' || c == 'X')
 			break;
