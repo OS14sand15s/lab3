@@ -14,7 +14,7 @@ int main(int argc,char *argv[])
 	for(i=0;i<50;i++){
 	/* 随机产生请求类型 */
 		memAccReq.virAddr = (int)random() % VIRTUAL_MEMORY_SIZE;
-		memAccReq.process=random()&1;
+		memAccReq.process=memAccReq.virAddr/128;
 		switch (random() % 3)
 		{
 			
