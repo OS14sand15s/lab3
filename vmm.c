@@ -17,6 +17,7 @@ Ptr_MemoryAccessRequest ptr_memAccReq;
 //MemoryAccessRequest memAccReq_fifo;
 
 int fifo;
+unsigned  TIME_COUNTER=0;
 
 PageTableItem find(int i){//解析地址到三级页表中寻址
 	return pageTable[i/16][i%16/4][i%4];
@@ -33,7 +34,7 @@ void do_init()
 		pageTable[i/16][i%16/4][i%4].pageNum = i;
 		pageTable[i/16][i%16/4][i%4].filled = FALSE;
 		pageTable[i/16][i%16/4][i%4].edited = FALSE;
-		pageTable[i/16][i%16/4][i%4].count = 0;
+		pageTable[i/16][i%16/4][i%4].time_count = 0;
 		/* 使用随机数设置该页的保护类型 */
 
 		pageTable[i/16][i%16/4][i%4].proType = random() % 7+1;
@@ -94,7 +95,7 @@ void do_response()
 	{
 		case REQUEST_READ: //读请求
 		{
-			ptr_pageTabIt->count++;
+			ptr_pageTabIt->time_count=++TIME_COUNTER;
 			if (!(ptr_pageTabIt->proType & READABLE)) //页面不可读
 			{
 				do_error(ERROR_READ_DENY);
@@ -106,7 +107,7 @@ void do_response()
 		}
 		case REQUEST_WRITE: //写请求
 		{
-			ptr_pageTabIt->count++;
+			ptr_pageTabIt->time_count=++TIME_COUNTER;
 			if (!(ptr_pageTabIt->proType & WRITABLE)) //页面不可写
 			{
 				do_error(ERROR_WRITE_DENY);	
@@ -120,7 +121,7 @@ void do_response()
 		}
 		case REQUEST_EXECUTE: //执行请求
 		{
-			ptr_pageTabIt->count++;
+			ptr_pageTabIt->time_count=++TIME_COUNTER;
 			if (!(ptr_pageTabIt->proType & EXECUTABLE)) //页面不可执行
 			{
 				do_error(ERROR_EXECUTE_DENY);
@@ -153,26 +154,27 @@ void do_page_fault(Ptr_PageTableItem ptr_pageTabIt)
 			ptr_pageTabIt->blockNum = i;
 			ptr_pageTabIt->filled = TRUE;
 			ptr_pageTabIt->edited = FALSE;
-			ptr_pageTabIt->count = 0;
+			ptr_pageTabIt->time_count = ++TIME_COUNTER;
 			
 			blockStatus[i] = ptr_pageTabIt->process+1;
 			return;
 		}
 	}
 	/* 没有空闲物理块，进行页面替换 */
-	do_LFU(ptr_pageTabIt);
+	do_LRU(ptr_pageTabIt);
 }
 
 /* 根据LFU算法进行页面替换 */
-void do_LFU(Ptr_PageTableItem ptr_pageTabIt)
+void do_LRU(Ptr_PageTableItem ptr_pageTabIt)
 {
-	unsigned int i, min, page;
-	printf("没有空闲物理块，开始进行LFU页面替换...\n");
-	for (i = 0, min = 0xFFFFFFFF, page = 0; i < PAGE_SUM; i++)
+	unsigned int i, min=0xFFFFFFFF, pagestart=pageTable[i/16][i%16/4][i%4].process*32,page=pagestart;
+	
+	printf("没有空闲物理块，开始进行LRU页面替换...\n");
+	for (i = pagestart, page ; i <pagestart+32 ; i++)
 	{
-		if (pageTable[i/16][i%16/4][i%4].filled&&pageTable[i/16][i%16/4][i%4].count < min)
+		if (pageTable[i/16][i%16/4][i%4].filled&&pageTable[i/16][i%16/4][i%4].time_count < min)
 		{
-			min = pageTable[i/16][i%16/4][i%4].count;
+			min = pageTable[i/16][i%16/4][i%4].time_count;
 			page = i;
 		}
 	}
@@ -184,7 +186,7 @@ void do_LFU(Ptr_PageTableItem ptr_pageTabIt)
 		do_page_out(&pageTable[page/16][page%16/4][page%4]);
 	}
 	pageTable[page/16][page%16/4][page%4].filled = FALSE;
-	pageTable[page/16][page%16/4][page%4].count = 0;
+	pageTable[page/16][page%16/4][page%4].time_count= 0;
 
 
 	/* 读辅存内容，写入到实存 */
@@ -194,7 +196,6 @@ void do_LFU(Ptr_PageTableItem ptr_pageTabIt)
 	ptr_pageTabIt->blockNum = pageTable[page/16][page%16/4][page%4].blockNum;
 	ptr_pageTabIt->filled = TRUE;
 	ptr_pageTabIt->edited = FALSE;
-	ptr_pageTabIt->count = 0;
 	printf("页面替换成功\n");
 }
 
@@ -318,12 +319,12 @@ void do_print_info()
 {
 	unsigned int i, j, k;
 	char str[4];
-	printf("process\t页号\t块号\t装入\t修改\t保护\t计数\t辅存\n");
+	printf("process\t页号\t块号\t装入\t修改\t保护\tTime\t辅存\n");
 	for (i = 0; i < PAGE_SUM; i++)
 	{
 		printf("%d\t%u\t%u\t%u\t%u\t%s\t%u\t%u\n", pageTable[i/16][i%16/4][i%4].process+1,i, pageTable[i/16][i%16/4][i%4].blockNum, pageTable[i/16][i%16/4][i%4].filled, 
 			pageTable[i/16][i%16/4][i%4].edited, get_proType_str(str, pageTable[i/16][i%16/4][i%4].proType), 
-			pageTable[i/16][i%16/4][i%4].count, pageTable[i/16][i%16/4][i%4].auxAddr);
+			pageTable[i/16][i%16/4][i%4].time_count, pageTable[i/16][i%16/4][i%4].auxAddr);
 	}
 }
 
