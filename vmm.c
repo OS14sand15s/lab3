@@ -29,6 +29,7 @@ void do_init()
 	srandom(time(NULL));
 	for (i = 0; i < PAGE_SUM; i++)
 	{
+		pageTable[i/16][i%16/4][i%4].process=PROCESS_1+i/32;//0-31=process_1(0),32-64=process_2,we can control it!
 		pageTable[i/16][i%16/4][i%4].pageNum = i;
 		pageTable[i/16][i%16/4][i%4].filled = FALSE;
 		pageTable[i/16][i%16/4][i%4].edited = FALSE;
@@ -49,7 +50,7 @@ void do_init()
 			do_page_in(&pageTable[j/16][j%16/4][j%4], j);
 			pageTable[j/16][j%16/4][j%4].blockNum = j;
 			pageTable[j/16][j%16/4][j%4].filled = TRUE;
-			blockStatus[j] = TRUE;
+			blockStatus[j] = pageTable[i/16][i%16/4][i%4].process+1;
 		}
 		else
 			blockStatus[j] = FALSE;
@@ -154,7 +155,7 @@ void do_page_fault(Ptr_PageTableItem ptr_pageTabIt)
 			ptr_pageTabIt->edited = FALSE;
 			ptr_pageTabIt->count = 0;
 			
-			blockStatus[i] = TRUE;
+			blockStatus[i] = ptr_pageTabIt->process+1;
 			return;
 		}
 	}
@@ -311,48 +312,16 @@ void do_error(ERROR_CODE code)
 	}
 }
 
-/* 产生访存请求 */
-void do_request()
-{
-	/* 随机产生请求地址 */
-	ptr_memAccReq->virAddr = random() % VIRTUAL_MEMORY_SIZE;
-	/* 随机产生请求类型 */
-	switch (random() % 3)
-	{
-		case 0: //读请求
-		{
-			ptr_memAccReq->reqType = REQUEST_READ;
-			printf("产生请求：\n地址：%u\t类型：读取\n", ptr_memAccReq->virAddr);
-			break;
-		}
-		case 1: //写请求
-		{
-			ptr_memAccReq->reqType = REQUEST_WRITE;
-			/* 随机产生待写入的值 */
-			ptr_memAccReq->value = random() % 0xFFu;
-			printf("产生请求：\n地址：%u\t类型：写入\t值：%02X\n", ptr_memAccReq->virAddr, ptr_memAccReq->value);
-			break;
-		}
-		case 2:
-		{
-			ptr_memAccReq->reqType = REQUEST_EXECUTE;
-			printf("产生请求：\n地址：%u\t类型：执行\n", ptr_memAccReq->virAddr);
-			break;
-		}
-		default:
-			break;
-	}	
-}
 
 /* 打印页表 */
 void do_print_info()
 {
 	unsigned int i, j, k;
 	char str[4];
-	printf("页号\t块号\t装入\t修改\t保护\t计数\t辅存\n");
+	printf("process\t页号\t块号\t装入\t修改\t保护\t计数\t辅存\n");
 	for (i = 0; i < PAGE_SUM; i++)
 	{
-		printf("%u\t%u\t%u\t%u\t%s\t%u\t%u\n", i, pageTable[i/16][i%16/4][i%4].blockNum, pageTable[i/16][i%16/4][i%4].filled, 
+		printf("%d\t%u\t%u\t%u\t%u\t%s\t%u\t%u\n", pageTable[i/16][i%16/4][i%4].process+1,i, pageTable[i/16][i%16/4][i%4].blockNum, pageTable[i/16][i%16/4][i%4].filled, 
 			pageTable[i/16][i%16/4][i%4].edited, get_proType_str(str, pageTable[i/16][i%16/4][i%4].proType), 
 			pageTable[i/16][i%16/4][i%4].count, pageTable[i/16][i%16/4][i%4].auxAddr);
 	}
