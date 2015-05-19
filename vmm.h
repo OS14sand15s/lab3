@@ -66,6 +66,7 @@ typedef enum {
 /* 访存请求 */
 typedef struct
 {
+	PROCESS_NAME process;
 	MemoryAccessRequestType reqType; //访存请求类型
 	unsigned  virAddr; //虚地址
 	BYTE value; //写请求的值
