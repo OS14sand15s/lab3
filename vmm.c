@@ -356,7 +356,35 @@ void initFile(){//-----------------------------------------add1
 
 		fprintf(ptr_auxMem, "%c",(int)random() % 26+'a' );
 	}
-}	
+}
+
+void do_print_virtualMem(){
+	unsigned char * buffer;
+	buffer=(char *)malloc(sizeof(unsigned char));
+	int i=0;
+	if (fseek(ptr_auxMem,0, SEEK_SET) < 0)
+	{
+		#ifdef DEBUG
+		printf("DEBUG: auxAddr=%u\tftell=%u\n", ptr_pageTabIt->auxAddr, ftell(ptr_auxMem));
+		#endif
+		do_error(ERROR_FILE_SEEK_FAILED);
+		exit(1);
+	}
+	printf("Address:\tContent:\n");
+	for(i=0;i<VIRTUAL_MEMORY_SIZE;i++){
+		fread(buffer,sizeof(unsigned char),1,ptr_auxMem);
+		printf("%d\t%02X\n",i,buffer[0]);
+	}
+}
+
+void do_print_actualMem(){
+	int i=0;
+	printf("Address:\tContent:\n");
+	for(;i<ACTUAL_MEMORY_SIZE;i++){
+		printf("%d\t%02X\n",i,actMem[i]);
+	}
+}
+
 int main(int argc, char* argv[])
 {
 	char c;
@@ -395,12 +423,15 @@ int main(int argc, char* argv[])
 			do_print_info();
 		while (c != '\n')
 			c = getchar();*/
-		printf("按X退出程序,按Y打印页表，按其他键继续...\n");
+		printf("按X退出程序,按Y打印页表，Press m to print virtual memory,press n to print actual memory,按其他键继续...\n");
 		if ((c = getchar()) == 'x' || c == 'X')
 			break;
 		else if(c=='Y'||c=='y'){
 			do_print_info();
-			
+		}else if(c=='n'||c=='N'){
+			do_print_actualMem();
+		}else if(c=='m'||c=='M'){
+			do_print_virtualMem();
 		}
 		while (c != '\n')
 			c = getchar();
@@ -414,3 +445,4 @@ int main(int argc, char* argv[])
 	}
 	return (0);
 }
+
