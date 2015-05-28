@@ -11,7 +11,7 @@ int main(int argc,char *argv[])
 	/* 随机产生请求地址 */
 		if((fd =open("/tmp/server",O_WRONLY||O_NONBLOCK))<0)
 		printf("do_request open fifo failed!\n");
-	for(i=0;i<50;i++){
+	for(i=0;i<5;i++){
 	/* 随机产生请求类型 */
 		memAccReq.virAddr = (int)random() % VIRTUAL_MEMORY_SIZE;
 		memAccReq.process=memAccReq.virAddr/128;
@@ -44,7 +44,7 @@ int main(int argc,char *argv[])
 		if(write(fd,&memAccReq,DATALEN)<0)
 			printf("do_request write fifo failed\n");
 	}
-		while(1);
+		//while(1);
 		close(fd);
 		return 0;
 	}
